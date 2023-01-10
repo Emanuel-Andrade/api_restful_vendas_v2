@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import ProductRouter from 'src/modules/products/routes/product.routes';
-import UserRoutes from 'src/modules/users/routes/users.routes';
-import LoginRoutes from 'src/modules/users/routes/login.routes';
-import passwordRoutes from 'src/modules/users/routes/password.routes';
-import ProfileRoutes from 'src/modules/users/routes/profile.routes';
+import ProductRouter from 'src/modules/products/infra/http/routes/product.routes';
+import UserRoutes from 'src/modules/users/infra/http/routes/users.routes';
+import LoginRoutes from 'src/modules/users/infra/http/routes/login.routes';
+import passwordRoutes from 'src/modules/users/infra/http/routes/password.routes';
+import ProfileRoutes from 'src/modules/users/infra/http/routes/profile.routes';
 import CustomerRoutes from 'src/modules/customers/infra/htttp/routes/customers.routes';
-import OrderRoutes from 'src/modules/orders/routes/orders.routes';
+import OrderRoutes from 'src/modules/orders/infra/http/routes/orders.routes';
 
 const routes = Router();
 
