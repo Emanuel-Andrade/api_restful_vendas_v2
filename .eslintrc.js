@@ -21,5 +21,6 @@ module.exports = {
     'import/extensions': 0,
     'class-methods-use-this': 0,
     camelcase: 0,
+    'no-unused-vars': 0,
   },
 };
