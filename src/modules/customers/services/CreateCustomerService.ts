@@ -1,10 +1,15 @@
+import { inject, injectable } from 'tsyringe/dist/typings/decorators';
 import AppError from 'src/shared/errors/appError';
 import { ICreateCustomer } from '../domain/models/ICreateCustomer';
 import { ICustomerRepository } from '../domain/repositories/ICustomerRepository';
 import { ICustomer } from '../domain/models/ICustomer';
 
+@injectable()
 class CreateCustomer {
-  constructor(private customerRepository: ICustomerRepository) {}
+  constructor(
+    @inject('CustomersRepository')
+    private customerRepository: ICustomerRepository,
+  ) {}
 
   public async create({ name, email }: ICreateCustomer): Promise<ICustomer> {
     const emailExist = await this.customerRepository.findByEmail(email);
