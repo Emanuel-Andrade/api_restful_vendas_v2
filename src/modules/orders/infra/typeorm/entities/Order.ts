@@ -8,7 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import Customers from 'src/modules/customers/typeorm/entities/Customers';
+import Customers from 'src/modules/customers/infra/typeorm/entities/Customers';
+import { IOrdersProducts } from 'src/modules/orders/domain/models/IOrderProducts';
 import OrdersProducts from './OrdersProducts';
 
 @Entity('orders')
@@ -23,7 +24,7 @@ class Order {
   @OneToMany(() => OrdersProducts, (order_products) => order_products.order, {
     cascade: true,
   })
-  order_products: OrdersProducts[];
+  order_products: IOrdersProducts[];
 
   @CreateDateColumn()
   created_at: Date;
