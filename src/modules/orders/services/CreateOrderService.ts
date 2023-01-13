@@ -1,26 +1,30 @@
-import { getCustomRepository } from 'typeorm';
 import AppError from 'src/shared/errors/appError';
-import CustomerRepository from 'src/modules/customers/infra/typeorm/repositories/CustomersRepository';
-import ProductRepository from 'src/modules/products/infra/typeorm/repositories/ProductsRepository';
-import Order from '../infra/typeorm/entities/Order';
-import OrderRepository from '../infra/typeorm/repositories/OrderRepository';
+import { ICustomerRepository } from 'src/modules/customers/domain/repositories/ICustomerRepository';
+import { IProduct } from 'src/modules/products/domain/model/IProduct';
+import { IProductRepository } from 'src/modules/products/domain/repositories/IProductRepository';
+import { IOrder } from '../domain/models/IOrder';
 import { IOrderRequest } from '../domain/models/IOrderNeeds';
+import { IOrderRepository } from '../domain/IOrderRepository/IOrderRepository';
 
 class CreateOrderService {
+  constructor(
+    private customerRepository: ICustomerRepository,
+    private orderRepository: IOrderRepository,
+    private productRepository: IProductRepository,
+  ) {}
+
   public async create({
     id_customer,
     products,
-  }: IOrderRequest): Promise<Order> {
-    const customOrderRepository = getCustomRepository(OrderRepository);
-    const customCustomerRepository = getCustomRepository(CustomerRepository);
-    const customProductRepository = getCustomRepository(ProductRepository);
-
-    const customerExist = await customCustomerRepository.findById(id_customer);
+  }: IOrderRequest): Promise<IOrder> {
+    const customerExist = await this.customerRepository.findById(id_customer);
     if (!customerExist) throw new AppError('Customer does not exists.');
 
-    const productsExists = await customProductRepository.findAllByIds(products);
+    const productsExists = await this.productRepository.findAllByIds(products);
     if (!productsExists) throw new AppError('product does not exists.');
-    const productsExistsIds = productsExists.map((product) => product.id);
+    const productsExistsIds = productsExists.map(
+      (product: IProduct) => product.id,
+    );
     const checkInexistentProducts = products.filter(
       (product) => !productsExistsIds.includes(product.id_product),
     );
@@ -30,7 +34,7 @@ class CreateOrderService {
       );
 
     const checkUnavailableQuantity = productsExists.filter(
-      (product) =>
+      (product: IProduct) =>
         products.filter((p) => p.id_product === product.id)[0].quantity >
         product.quantity,
     );
@@ -43,25 +47,27 @@ class CreateOrderService {
     const serializedProducts = products.map((product) => ({
       product_id: product.id_product,
       quantity: product.quantity,
-      price: productsExists.filter((p) => p.id === product.id_product)[0].price,
+      price: productsExists.filter(
+        (p: IProduct) => p.id === product.id_product,
+      )[0].price,
     }));
 
-    const order = await customOrderRepository.createOrder({
+    const order = await this.orderRepository.createOrder({
       customer: customerExist,
       products: serializedProducts,
     });
 
     const { order_products } = order;
     const updateProductsQuantity = order_products.map((order_product) => ({
-      id: order_product.product_id,
+      id_product: order_product.product_id,
       quantity:
         productsExists.filter(
-          (product) => product.id === order_product.product_id,
+          (product: IProduct) => product.id === order_product.product_id,
         )[0].quantity - order_product.quantity,
     }));
 
-    await customProductRepository.save(updateProductsQuantity);
+    await this.productRepository.save(updateProductsQuantity);
     return order;
   }
 }
-export default new CreateOrderService();
+export default CreateOrderService;

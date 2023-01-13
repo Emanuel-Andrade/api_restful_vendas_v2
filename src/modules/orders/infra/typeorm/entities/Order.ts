@@ -10,10 +10,11 @@ import {
 
 import Customers from 'src/modules/customers/infra/typeorm/entities/Customers';
 import { IOrdersProducts } from 'src/modules/orders/domain/models/IOrderProducts';
+import { IOrder } from 'src/modules/orders/domain/models/IOrder';
 import OrdersProducts from './OrdersProducts';
 
 @Entity('orders')
-class Order {
+class Order implements IOrder {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
