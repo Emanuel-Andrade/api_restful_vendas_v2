@@ -1,11 +1,11 @@
 import { Response, Request } from 'express';
-import ShoOrderService from '../../../services/ShowOrderService';
+import ShowOrderService from '../../../services/ShowOrderService';
 import CreateOrderService from '../../../services/CreateOrderService';
 
 class ProductController {
   public async show(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
-    const product = await ShoOrderService.show({ id });
+    const product = await ShowOrderService.show({ id });
 
     return res.json(product);
   }
