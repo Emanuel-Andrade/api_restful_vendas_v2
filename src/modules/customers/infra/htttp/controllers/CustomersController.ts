@@ -1,45 +1,61 @@
 import { Request, Response } from 'express';
 import { container } from 'tsyringe';
-import UpdateCustomerService from '../../../services/UpdateCustomersService';
-import CreateCustomersService from '../../../services/CreateCustomerService';
-import ListCustomersService from '../../../services/ListCustomerService';
-import DeleteCustomersService from '../../../services/DeleteCustomerProfile';
-import ShowCustomerProfile from '../../../services/ShowCustomerProfile';
+import CreateCustomerService from 'src/modules/customers/services/CreateCustomerService';
+import DeleteCustomerService from 'src/modules/customers/services/DeleteCustomerProfile';
+import ListCustomerService from 'src/modules/customers/services/ListCustomerService';
+import ShowCustomerService from 'src/modules/customers/services/ShowCustomerProfile';
+import UpdateCustomerService from 'src/modules/customers/services/UpdateCustomersService';
 
-class CustomerController {
-  public async index(req: Request, res: Response): Promise<Response> {
-    const result = await ListCustomersService.list();
-    return res.json(result);
+export default class CustomersController {
+  public async index(request: Request, response: Response): Promise<Response> {
+    const listCustomers = container.resolve(ListCustomerService);
+
+    const customers = await listCustomers.execute();
+
+    return response.json(customers);
   }
 
-  public async create(req: Request, res: Response): Promise<Response> {
-    const CreateCustomer = container.resolve(CreateCustomersService);
-    const data = req.body;
-    const result = await CreateCustomer.create(data);
-    return res.json(result);
+  public async show(request: Request, response: Response): Promise<Response> {
+    const { id } = request.params;
+
+    const showCustomer = container.resolve(ShowCustomerService);
+
+    const customer = await showCustomer.execute({ id });
+
+    return response.json(customer);
   }
 
-  public async update(req: Request, res: Response): Promise<Response> {
-    const { customer_id } = req.body;
-    const variables = req.body;
-    const result = await UpdateCustomerService.update({
-      customer_id,
-      variables,
+  public async create(request: Request, response: Response): Promise<Response> {
+    const { name, email } = request.body;
+    const createCustomer = container.resolve(CreateCustomerService);
+    const customer = await createCustomer.create({
+      name,
+      email,
     });
-    return res.json(result);
+    return response.json(customer);
   }
 
-  public async delete(req: Request, res: Response): Promise<Response> {
-    const { id } = req.params;
-    const result = await DeleteCustomersService.delete(id);
-    return res.json(result);
+  public async update(request: Request, response: Response): Promise<Response> {
+    const { name, email } = request.body;
+    const { id } = request.params;
+
+    const updateCustomer = container.resolve(UpdateCustomerService);
+
+    const customer = await updateCustomer.execute({
+      id,
+      name,
+      email,
+    });
+    return response.json(customer);
   }
 
-  public async findOne(req: Request, res: Response): Promise<Response> {
-    const { id } = req.params;
-    const result = await ShowCustomerProfile.findById(id);
-    return res.json(result);
+  public async delete(request: Request, response: Response): Promise<Response> {
+    const { id } = request.params;
+
+    const deleteCustomer = container.resolve(DeleteCustomerService);
+
+    await deleteCustomer.execute({ id });
+
+    return response.json([]);
   }
 }
-
-export default new CustomerController();

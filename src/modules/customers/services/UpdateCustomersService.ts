@@ -1,34 +1,38 @@
-import { getCustomRepository } from 'typeorm';
-import AppError from '../../../shared/errors/appError';
-import Customer from '../typeorm/entities/Customers';
-import CustomerRepository from '../typeorm/repositories/CustomersRepository';
+import { inject, injectable } from 'tsyringe';
+import AppError from 'src/shared/errors/appError';
+import Customer from 'src/modules/customers/infra/typeorm/entities/Customers';
+import { ICustomersRepository } from 'src/modules/customers/domain/repositories/ICustomerRepository';
+import { IUpdateCustomer } from '../domain/models/IUpdateCustomer';
 
-interface IUpdateVariables {
-  [key: string]: string;
-}
+@injectable()
+class UpdateCustomerService {
+  constructor(
+    @inject('CustomersRepository')
+    private customersRepository: ICustomersRepository,
+  ) {}
 
-interface IRequest {
-  customer_id: string;
-  variables: IUpdateVariables;
-}
+  public async execute({
+    id,
+    name,
+    email,
+  }: IUpdateCustomer): Promise<Customer> {
+    const customer = await this.customersRepository.findById(id);
 
-class UpdateCustomer {
-  public async update({ customer_id, variables }: IRequest): Promise<Customer> {
-    const customCustomerRepository = getCustomRepository(CustomerRepository);
-    const customer = await customCustomerRepository.findById(customer_id);
-    if (customer === undefined) throw new AppError('There is no customer');
-
-    if (variables.email) {
-      const emailExist = await customCustomerRepository.findByEmail(
-        variables.email,
-      );
-
-      if (emailExist) throw new AppError('Email already registered');
+    if (!customer) {
+      throw new AppError('Customer not found.');
     }
-    if (variables.email) customer.email = variables.email;
-    if (variables.name) customer.name = variables.name;
-    await customCustomerRepository.save(customer);
+
+    const customerExists = await this.customersRepository.findByEmail(email);
+
+    if (customerExists && email !== customer.email) {
+      throw new AppError('There is already one customer with this email.');
+    }
+    customer.name = name;
+    customer.email = email;
+
+    await this.customersRepository.save(customer);
+
     return customer;
   }
 }
-export default new UpdateCustomer();
+export default UpdateCustomerService;

@@ -1,14 +1,24 @@
-import { getCustomRepository } from 'typeorm';
-import AppError from '../../../shared/errors/appError';
-import CustomersRepository from '../typeorm/repositories/CustomersRepository';
+import { inject, injectable } from 'tsyringe';
+import AppError from 'src/shared/errors/appError';
+import { ICustomersRepository } from 'src/modules/customers/domain/repositories/ICustomerRepository';
+import { IDeleteCustomer } from '../domain/models/IDeleteCustomer';
 
-class ShowCustomerProfile {
-  public async delete(customer_id: string): Promise<void> {
-    const customCustomerRepository = getCustomRepository(CustomersRepository);
-    const customer = await customCustomerRepository.findById(customer_id);
-    if (customer === undefined) throw new AppError('There is no user');
+@injectable()
+class DeleteCustomerService {
+  constructor(
+    @inject('CustomersRepository')
+    private customersRepository: ICustomersRepository,
+  ) {}
 
-    await customCustomerRepository.remove(customer);
+  public async execute({ id }: IDeleteCustomer): Promise<void> {
+    const customer = await this.customersRepository.findById(id);
+
+    if (!customer) {
+      throw new AppError('Customer not found.');
+    }
+
+    await this.customersRepository.remove(customer);
   }
 }
-export default new ShowCustomerProfile();
+
+export default DeleteCustomerService;
