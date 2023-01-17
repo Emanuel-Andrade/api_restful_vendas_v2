@@ -1,40 +1,44 @@
-import { getCustomRepository } from 'typeorm';
+import { inject, injectable } from 'tsyringe';
+import redisCache from 'src/shared/cache/RedisCache';
 import AppError from 'src/shared/errors/appError';
-import RedisCache from 'src/shared/cache/RedisCache';
-import Product from '../typeorm/entities/Product';
-import ProductRepository from '../typeorm/repositories/ProductsRepository';
+import { IUpdateProduct } from '../domain/models/IUpdateProduct';
+import { IProductsRepository } from '../domain/repositories/IProductRepository';
+import { IProduct } from '../domain/models/IProduct';
 
-interface IRequest {
-  name: string;
-  id: string;
-  price: number;
-  quantity: number;
-}
+@injectable()
+class UpdateProductService {
+  constructor(
+    @inject('ProductsRepository')
+    private productsRepository: IProductsRepository,
+  ) {}
 
-class CreateProduct {
-  public async update({
+  public async execute({
     id,
     name,
     price,
     quantity,
-  }: IRequest): Promise<Product> {
-    const CProductRepository = getCustomRepository(ProductRepository);
-    const product = await CProductRepository.findOne(id);
+  }: IUpdateProduct): Promise<IProduct> {
+    const product = await this.productsRepository.findById(id);
 
-    if (!product) throw new AppError('There is no product with this id');
+    if (!product) {
+      throw new AppError('Product not found.');
+    }
 
-    const hasProduct = await CProductRepository.findByName(name);
+    const productExists = await this.productsRepository.findByName(name);
 
-    if (hasProduct && name !== product.name)
-      throw new AppError('There is already an product with this name');
+    if (productExists) {
+      throw new AppError('There is already one product with this name');
+    }
+
+    await redisCache.invalidate('api-vendas-PRODUCT_LIST');
 
     product.name = name;
     product.price = price;
     product.quantity = quantity;
 
-    await CProductRepository.save(product);
-    await RedisCache.invalidate('api-vendas-PRODUCT_LIST');
+    await this.productsRepository.save(product);
+
     return product;
   }
 }
-export default new CreateProduct();
+export default UpdateProductService;

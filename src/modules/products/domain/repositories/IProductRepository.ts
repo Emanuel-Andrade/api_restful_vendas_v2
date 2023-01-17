@@ -1,20 +1,15 @@
-import { IProduct } from 'src/modules/products/domain/models/IProduct';
+import { IProduct } from '../models/IProduct';
+import { IFindProducts } from '../models/IFindProducts';
+import { ICreateProduct } from '../models/ICreateProduct';
+import { IUpdateStockProduct } from '../models/IUpdateStockProduct';
 
-interface IProductAndQuantity {
-  id_product: string;
-  quantity: number;
-}
-
-export interface IProductRepository {
+export interface IProductsRepository {
   findByName(name: string): Promise<IProduct | undefined>;
-
-  findAllByIds(
-    products: IProductAndQuantity[],
-  ): Promise<IProduct[] | undefined>;
-
-  findOne(name: string): Promise<IProduct | undefined>;
-
-  find(conditions?: string[] | undefined): Promise<IProduct[] | undefined>;
-
-  save(ProductAndQuantity: IProductAndQuantity[]): void;
+  findById(id: string): Promise<IProduct | undefined>;
+  findAll(): Promise<IProduct[]>;
+  findAllByIds(products: IFindProducts[]): Promise<IProduct[]>;
+  create(data: ICreateProduct): Promise<IProduct>;
+  save(product: IProduct): Promise<IProduct>;
+  updateStock(products: IUpdateStockProduct[]): Promise<void>;
+  remove(product: IProduct): Promise<void>;
 }
