@@ -1,15 +1,23 @@
-import { getCustomRepository } from 'typeorm';
-import AppError from '../../../shared/errors/appError';
-import User from '../typeorm/entities/User';
-import UserRepository from '../typeorm/repositories/UserRepository';
+import { inject, injectable } from 'tsyringe';
+import AppError from 'src/shared/errors/appError';
+import { IShowUser } from '../domain/models/IShowUser';
+import { IUsersRepository } from '../domain/repositories/IUsersRepository';
+import { IUser } from '../domain/models/IUser';
 
+@injectable()
 class ShowProfileService {
-  public async findById(user_id: string): Promise<User> {
-    const customUserRepository = getCustomRepository(UserRepository);
-    const user = await customUserRepository.findById(user_id);
-    if (user === undefined) throw new AppError('There is no user');
+  constructor(
+    @inject('UsersRepository')
+    private usersRepository: IUsersRepository,
+  ) {}
 
+  public async execute({ user_id }: IShowUser): Promise<IUser> {
+    const user = await this.usersRepository.findById(user_id);
+
+    if (!user) {
+      throw new AppError('User not found.');
+    }
     return user;
   }
 }
-export default new ShowProfileService();
+export default ShowProfileService;

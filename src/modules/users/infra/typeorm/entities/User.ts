@@ -6,15 +6,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
-import { load } from 'ts-dotenv';
-
-const env = load({
-  PORT: String,
-});
+import { IUser } from 'src/modules/users/domain/models/IUser';
 
 @Entity('users')
-class User {
-  @PrimaryGeneratedColumn()
+class User implements IUser {
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
@@ -38,10 +34,10 @@ class User {
 
   @Expose({ name: 'avatar_url' })
   getAvatarUrl(): string | null {
-    if (!this.avatar) return null;
-
-    return `http://localhost:${env.PORT}/files/${this.avatar}`;
+    if (!this.avatar) {
+      return null;
+    }
+    return `${process.env.APP_API_URL}/files/${this.avatar}`;
   }
 }
-
 export default User;

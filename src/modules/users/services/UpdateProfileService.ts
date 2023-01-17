@@ -1,45 +1,51 @@
-import { getCustomRepository } from 'typeorm';
-import bcrypt from 'bcryptjs';
-import AppError from '../../../shared/errors/appError';
-import User from '../typeorm/entities/User';
-import UserRepository from '../typeorm/repositories/UserRepository';
+import { inject, injectable } from 'tsyringe';
+import AppError from 'src/shared/errors/appError';
+import { compare, hash } from 'bcryptjs';
+import { IUpdateProfile } from '../domain/models/IUpdateProfile';
+import { IUser } from '../domain/models/IUser';
+import { IUsersRepository } from '../domain/repositories/IUsersRepository';
 
-interface IUpdateVariables {
-  [key: string]: string;
-}
+@injectable()
+class UpdateProfileService {
+  constructor(
+    @inject('UsersRepository')
+    private usersRepository: IUsersRepository,
+  ) {}
 
-interface IRequest {
-  user_id: string;
-  variables: IUpdateVariables;
-}
+  public async execute({
+    user_id,
+    name,
+    email,
+    password,
+    old_password,
+  }: IUpdateProfile): Promise<IUser> {
+    const user = await this.usersRepository.findById(user_id);
 
-class UpdateUser {
-  public async update({ user_id, variables }: IRequest): Promise<User> {
-    const customUserRepository = getCustomRepository(UserRepository);
-    const user = await customUserRepository.findById(user_id);
-    if (user === undefined) throw new AppError('There is no user');
-
-    if (
-      variables.password &&
-      !(await bcrypt.compare(variables.old_password, user.password))
-    ) {
-      throw new AppError('old password does not match');
+    if (!user) {
+      throw new AppError('User not found.');
     }
 
-    if (variables.email) {
-      const emailExist = await customUserRepository.findByEmail(
-        variables.email,
-      );
+    const userUpdateEmail = await this.usersRepository.findByEmail(email);
 
-      if (emailExist) throw new AppError('Email already registered');
+    if (userUpdateEmail && userUpdateEmail.id !== user_id) {
+      throw new AppError('There is already one user with this email.');
     }
-    if (variables.email) user.email = variables.email;
-    if (variables.name) user.name = variables.name;
-    if (variables.password) {
-      user.password = await bcrypt.hash(variables.password, 8);
+    if (password && !old_password) {
+      throw new AppError('Old password is required.');
     }
-    await customUserRepository.save(user);
+    if (password && old_password) {
+      const checkOldPassword = await compare(old_password, user.password);
+      if (!checkOldPassword) {
+        throw new AppError('Old password does not match.');
+      }
+      user.password = await hash(password, 8);
+    }
+    user.name = name;
+    user.email = email;
+
+    await this.usersRepository.save(user);
+
     return user;
   }
 }
-export default new UpdateUser();
+export default UpdateProfileService;

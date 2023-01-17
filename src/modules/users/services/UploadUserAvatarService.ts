@@ -1,39 +1,47 @@
-import { getCustomRepository } from 'typeorm';
-import path from 'path';
-import fs from 'fs';
+import { inject, injectable } from 'tsyringe';
 import AppError from 'src/shared/errors/appError';
-import authConfig from 'src/config/upload';
-import UserRepository from '../typeorm/repositories/UserRepository';
+import uploadConfig from 'src/config/upload';
+import DiskStorageProvider from 'src/shared/providers/StorageProvider/DiskStorageProvider';
+import S3StorageProvider from 'src/shared/providers/StorageProvider/S3StorageProvider';
+import { IUpdateUserAvatar } from '../domain/models/IUpdateUserAvatar';
+import { IUser } from '../domain/models/IUser';
+import { IUsersRepository } from '../domain/repositories/IUsersRepository';
 
-interface IRequest {
-  userId: string;
-  avatarFileName: string;
-}
+@injectable()
+class UpdateUserAvatarService {
+  constructor(
+    @inject('UsersRepository')
+    private usersRepository: IUsersRepository,
+  ) {}
 
-interface Iresponse {
-  id: string;
-  avatar: string;
-  name: string;
-}
-
-class UploadUserAvatarService {
   public async execute({
-    userId,
-    avatarFileName,
-  }: IRequest): Promise<Iresponse> {
-    const customUserRepository = getCustomRepository(UserRepository);
+    user_id,
+    avatarFilename,
+  }: IUpdateUserAvatar): Promise<IUser> {
+    const user = await this.usersRepository.findById(user_id);
 
-    const user = await customUserRepository.findById(userId);
-    if (!user) throw new AppError('User not found', 401);
-
-    if (user) {
-      const userAvatarFilePath = path.join(authConfig.directory, user.avatar);
-      const avatarExist = await fs.promises.stat(userAvatarFilePath);
-      if (avatarExist) fs.promises.unlink(userAvatarFilePath);
+    if (!user) {
+      throw new AppError('User not found.');
     }
-    user.avatar = avatarFileName;
-    const newUser = await customUserRepository.save(user);
-    return { id: newUser.id, avatar: newUser.avatar, name: newUser.name };
+    if (uploadConfig.driver === 's3') {
+      const s3Provider = new S3StorageProvider();
+      if (user.avatar) {
+        await s3Provider.deleteFile(user.avatar);
+      }
+      const filename = await s3Provider.saveFile(avatarFilename);
+      user.avatar = filename;
+    } else {
+      const diskProvider = new DiskStorageProvider();
+      if (user.avatar) {
+        await diskProvider.deleteFile(user.avatar);
+      }
+      const filename = await diskProvider.saveFile(avatarFilename);
+      user.avatar = filename;
+    }
+
+    await this.usersRepository.save(user);
+
+    return user;
   }
 }
-export default new UploadUserAvatarService();
+export default UpdateUserAvatarService;

@@ -1,32 +1,28 @@
 import { Request, Response } from 'express';
+import { container } from 'tsyringe';
 import { instanceToInstance } from 'class-transformer';
-import CreateSessionService from '../../../services/CreateSessionService';
 import CreateUserService from '../../../services/CreateUserService';
-import ListUsersService from '../../../services/ListUsersService';
+import ListUserService from '../../../services/ListUsersService';
 
-class UserController {
-  public async index(req: Request, res: Response): Promise<Response> {
-    const result = await ListUsersService.list();
-    return res.json(instanceToInstance(result));
+export default class UsersController {
+  public async index(request: Request, response: Response): Promise<Response> {
+    const listUser = container.resolve(ListUserService);
+
+    const users = await listUser.execute();
+
+    return response.json(instanceToInstance(users));
   }
 
-  public async create(req: Request, res: Response): Promise<Response> {
-    const data = req.body;
-    const result = await CreateUserService.create(data);
-    return res.json(instanceToInstance(result));
-  }
+  public async create(request: Request, response: Response): Promise<Response> {
+    const { name, email, password } = request.body;
 
-  public async login(req: Request, res: Response): Promise<Response> {
-    const data = req.body;
-    const result = await CreateSessionService.login(data);
-    return res.json(result);
-  }
+    const createUser = container.resolve(CreateUserService);
 
-  public async findById(req: Request, res: Response): Promise<Response> {
-    const { id } = req.params;
-    const result = await ListUsersService.findById(id);
-    return res.json(instanceToInstance(result));
+    const user = await createUser.execute({
+      name,
+      email,
+      password,
+    });
+    return response.json(instanceToInstance(user));
   }
 }
-
-export default new UserController();

@@ -1,17 +1,16 @@
 import { Request, Response } from 'express';
-import AppError from 'src/shared/errors/appError';
-import UploadUserAvatarService from '../../../services/UploadUserAvatarService';
+import { container } from 'tsyringe';
+import UpdateUserAvatarService from 'src/modules/users/services/UpdateUserAvatarService';
+import { instanceToInstance } from 'class-transformer';
 
-class UserController {
-  public async execute(req: Request, res: Response): Promise<Response> {
-    if (!req.file) throw new AppError('image not sent', 400);
-    const { filename } = req.file;
-    const user = await UploadUserAvatarService.execute({
-      userId: req.user.id,
-      avatarFileName: filename,
+export default class UserAvatarController {
+  public async update(request: Request, response: Response): Promise<Response> {
+    const updateAvatar = container.resolve(UpdateUserAvatarService);
+
+    const user = await updateAvatar.execute({
+      user_id: request.user.id,
+      avatarFilename: request.file.filename,
     });
-    return res.json(user);
+    return response.json(instanceToInstance(user));
   }
 }
-
-export default new UserController();
