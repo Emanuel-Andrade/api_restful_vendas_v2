@@ -1,6 +1,6 @@
 import { FindConditions, In, Repository } from 'typeorm';
 import { IProductRepository } from 'src/modules/products/domain/repositories/IProductRepository';
-import { IProduct } from 'src/modules/products/domain/model/IProduct';
+import { IProduct } from 'src/modules/products/domain/models/IProduct';
 
 interface IFindProducts {
   id_product: string;

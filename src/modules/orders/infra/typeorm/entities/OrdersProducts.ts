@@ -9,10 +9,11 @@ import {
 } from 'typeorm';
 
 import Product from 'src/modules/products/infra/typeorm/entities/Product';
+import { IOrderProducts } from 'src/modules/orders/domain/models/IOrderProducts';
 import Order from './Order';
 
 @Entity('orders_products')
-class OrdersProducts {
+class OrdersProducts implements IOrderProducts {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -42,5 +43,4 @@ class OrdersProducts {
   @UpdateDateColumn()
   updated_at: Date;
 }
-
 export default OrdersProducts;

@@ -1,17 +1,11 @@
-import { IOrdersProducts } from 'src/modules/orders/domain/models/IOrderProducts';
+import { IOrderProducts } from 'src/modules/orders/domain/models/IOrderProducts';
 
 export interface IProduct {
   id: string;
-
-  order_products: IOrdersProducts[];
-
+  order_products: IOrderProducts[];
   name: string;
-
   price: number;
-
   quantity: number;
-
   created_at: Date;
-
   updated_at: Date;
 }

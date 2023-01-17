@@ -1,4 +1,4 @@
-import { IProduct } from 'src/modules/products/domain/model/IProduct';
+import { IProduct } from 'src/modules/products/domain/models/IProduct';
 
 interface IProductAndQuantity {
   id_product: string;
