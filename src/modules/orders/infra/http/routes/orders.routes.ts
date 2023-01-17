@@ -4,6 +4,7 @@ import IsAuthenticated from 'src/modules/customers/middlewares/IsAuthenticated';
 import OrdersController from '../controllers/OrdersController';
 
 const OrderRoutes = Router();
+const ordersController = new OrdersController();
 OrderRoutes.use(IsAuthenticated.execute);
 
 OrderRoutes.get(
@@ -13,7 +14,7 @@ OrderRoutes.get(
       id: Joi.string().uuid().required(),
     },
   }),
-  OrdersController.show,
+  ordersController.show,
 );
 
 OrderRoutes.post(
@@ -24,7 +25,7 @@ OrderRoutes.post(
       products: Joi.required(),
     },
   }),
-  OrdersController.create,
+  ordersController.create,
 );
 
 export default OrderRoutes;
